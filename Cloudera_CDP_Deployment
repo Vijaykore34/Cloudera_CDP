@@ -1,0 +1,143 @@
+********************************************************
+	         Cloudera Data Platform
+********************************************************
+
+
+> Create an Instance for master Name it as ==> CM
+2.ubuntu 20
+3.t2.xlarge
+4.select existing security group ===> default
+5.config storage ===> 100 GiB gp2
+6.launch instance
+7.update the security group ===> edit inbound rules ===> upper side All trafiic my ip
+                            ===> second row as it is ====> as it is
+
+
+> Connect to an instance
+1.ssh -i nick.pem ubuntu@public_ip 
+
+
+
+-----*** Update the server ***-----
+$ 1.sudo apt-get update && sudo apt-get dist-upgrade -y
+
+
+-----*** Disable transparent huge pages ***-----
+
+$ 1.sudo nano /etc/init.d/disable-transparent-hugepages
+
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          disable-transparent-hugepages
+# Required-Start:    $local_fs
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Disable Linux transparent huge pages
+# Description:       Disable Linux transparent huge pages, to improve
+#                    database performance.
+### END INIT INFO
+
+case $1 in
+  start)
+    if [ -d /sys/kernel/mm/transparent_hugepage ]; then
+      thp_path=/sys/kernel/mm/transparent_hugepage
+    elif [ -d /sys/kernel/mm/redhat_transparent_hugepage ]; then
+      thp_path=/sys/kernel/mm/redhat_transparent_hugepage
+    else
+      return 0
+    fi
+
+    echo 'never' > ${thp_path}/enabled
+    echo 'never' > ${thp_path}/defrag
+
+    unset thp_path
+    ;;
+esac
+
+$ 2.sudo chmod 755 /etc/init.d/disable-transparent-hugepages
+
+$ 3.sudo update-rc.d disable-transparent-hugepages defaults
+
+>>Restart server or Instance  ===> select the instance Go in action Reboot instance
+>> Connect to an instance ===> ssh -i nick.pem ubuntu@Public_ip
+
+-----*** Install NTP ***-----
+$ 1.sudo apt-get install ntp -y 
+
+
+-----*** Set Swappiness ***-----
+1.sudo sysctl vm.swappiness=1
+2.echo 'vm.swappiness=1' | sudo tee --append /etc/sysctl.conf
+                                                                      sudo sysctl -a | grep vm.swappiness ===> sir not used this command
+
+
+-----*** Install psycopg2 package ***-----
+
+$ 1.sudo apt install python -y
+
+$ 2.curl 'https://bootstrap.pypa.io/pip/2.7/get-pip.py' > get-pip.py && sudo python get-pip.py
+
+$ 3.sudo pip install psycopg2==2.7.5 --ignore-installed
+
+>Go in Instance select the instance ====> Action ===> Create image name it as CDP ===> tick to enable  create image
+> Go in ami select the ami Number of instance 2 
+2.select t2.xlarge
+3.select the default security group Launch the instance 
+
+>Again select ami and launch instance from ami take number of instance 3
+2.t2.large
+3.secuirty group ==> default
+4.launch the instance
+
+
+-----*** Install and start CM ***-----
+# This will download the cloudera manager
+
+$ 1.wget https://archive.cloudera.com/cm7/7.4.4/cloudera-manager-installer.bin
+$ 2.ls
+$ 3.chmod u+x cloudera-manager-installer.bin
+$ 4.sudo ./cloudera-manager-installer.bin
+
+# Connecting to Cloudera Manager
+public_ip:7180 (http) non ssl enabled 
+public_ip:7183 (https) ssl enabled
+
+> Go in instance select the instance copy the public_ip of CM  past it in search bar :7180
+
+> Login to Cloudera Manager website default ====> Username ==> admin
+                                                  Password ==> admin
+Next 
+1.Try cloudera Data platform for 60 days
+ tick ===> Yes
+
+2.leave as it is and ===> continue
+3.Cluster Name ===> Cluster 1  ===> then contiue
+4.Specify Hosts ===> copy the private dns of all the instances  SSH Port 22 ===> click on Search it should show 6 hosts and running ====> Continue  
+5. tick on ===> Cloudera Reporsitory 
+6.other software 1.install Method tick on Use Parcels ==> Then tick on Cloudera Runtime ==> Additional Parcels tick on ===> None
+7. Tick on Install cloudera-Provided Version of open JDK
+8.SSH Username Tick on Another user ==> ubuntu 
+  Authenication tick on All hosts accept same private key
+then  private key ==> upload the private key file from desktop
+leave Passphrase as it is 
+SSH port as it is 
+simultanous as it is 
+
+9.it will auto start installation 
+10. Inspect Network performance ===>  Click on Inspect Network Performance 
+then Inspect Host  tick on Fix the issues  ===> Video also from portal
+
+11.go in terminal check ntp ===> sudo service ntp status
+12.sudo service ntp restart
+13.go in cloudera instpect hosts
+14.select services ==> tick on Custom services
+them select hdfs then hive then hive on tez  then Oozie then yarn Zookeeper
+15.check video
+
+
+> Go in terminal 
+1.exit
+2.
+
+
